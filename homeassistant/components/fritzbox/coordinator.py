@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from pyfritzhome import Fritzhome, FritzhomeDevice, LoginError
-import requests
+import requests  # type: ignore[import]
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -15,14 +15,15 @@ from .const import CONF_CONNECTIONS, DOMAIN, LOGGER
 
 
 class FritzboxDataUpdateCoordinator(DataUpdateCoordinator):
-    """Fritzbox Smarthome device data update coordinator."""
+    """Fritzbox Smarthome entity data update coordinator."""
 
     configuration_url: str
+    fritz: Fritzhome
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the Fritzbox Smarthome device coordinator."""
         self.entry = entry
-        self.fritz: Fritzhome = hass.data[DOMAIN][self.entry.entry_id][CONF_CONNECTIONS]
+        self.fritz = hass.data[DOMAIN][self.entry.entry_id][CONF_CONNECTIONS]
         self.configuration_url = self.fritz.get_prefixed_host()
         super().__init__(
             hass,
@@ -31,10 +32,11 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=30),
         )
 
-    def _update_fritz_devices(self) -> dict[str, FritzhomeDevice]:
-        """Update all fritzbox device data."""
+    def _update_fritz_entities(self) -> dict[str, FritzhomeDevice]:
+        """Update all fritzbox entity data."""
         try:
             self.fritz.update_devices()
+            self.fritz.update_templates()
         except requests.exceptions.ConnectionError as ex:
             raise UpdateFailed from ex
         except requests.exceptions.HTTPError:
@@ -44,9 +46,11 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator):
             except LoginError as ex:
                 raise ConfigEntryAuthFailed from ex
             self.fritz.update_devices()
+            self.fritz.update_templates()
+
+        data: dict[str, dict] = {"devices": {}, "templates": {}}
 
         devices = self.fritz.get_devices()
-        data = {}
         for device in devices:
             # assume device as unavailable, see #55799
             if (
@@ -60,9 +64,14 @@ class FritzboxDataUpdateCoordinator(DataUpdateCoordinator):
                 LOGGER.debug("Assume device %s as unavailable", device.name)
                 device.present = False
 
-            data[device.ain] = device
+            data["devices"][device.ain] = device
+
+        templates = self.fritz.get_templates()
+        for template in templates:
+            data["templates"][template.ain] = template
+
         return data
 
     async def _async_update_data(self) -> dict[str, FritzhomeDevice]:
         """Fetch all device data."""
-        return await self.hass.async_add_executor_job(self._update_fritz_devices)
+        return await self.hass.async_add_executor_job(self._update_fritz_entities)

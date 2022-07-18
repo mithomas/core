@@ -37,7 +37,7 @@ async def async_setup_entry(
     entities: list[FritzboxLight] = []
     coordinator = hass.data[FRITZBOX_DOMAIN][entry.entry_id][CONF_COORDINATOR]
 
-    for ain, device in coordinator.data.items():
+    for ain, device in coordinator.data["devices"].items():
         if not device.has_lightbulb:
             continue
 

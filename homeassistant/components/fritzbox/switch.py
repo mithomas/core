@@ -21,7 +21,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             FritzboxSwitch(coordinator, ain)
-            for ain, device in coordinator.data.items()
+            for ain, device in coordinator.data["devices"].items()
             if device.has_switch
         ]
     )

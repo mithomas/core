@@ -55,7 +55,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             FritzboxThermostat(coordinator, ain)
-            for ain, device in coordinator.data.items()
+            for ain, device in coordinator.data["devices"].items()
             if device.has_thermostat
         ]
     )

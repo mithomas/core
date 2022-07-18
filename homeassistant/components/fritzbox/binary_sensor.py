@@ -73,7 +73,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             FritzboxBinarySensor(coordinator, ain, description)
-            for ain, device in coordinator.data.items()
+            for ain, device in coordinator.data["devices"].items()
             for description in BINARY_SENSOR_TYPES
             if description.suitable(device)
         ]

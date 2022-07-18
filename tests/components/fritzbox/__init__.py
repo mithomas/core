@@ -146,3 +146,7 @@ class FritzDeviceLightMock(FritzDeviceBaseMock):
     level = 100
     present = True
     state = True
+
+
+class FritzDeviceTemplateMock(FritzDeviceBaseMock):
+    """Mock of a AVM Fritz!Box template."""

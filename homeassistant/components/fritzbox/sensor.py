@@ -186,7 +186,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             FritzBoxSensor(coordinator, ain, description)
-            for ain, device in coordinator.data.items()
+            for ain, device in coordinator.data["devices"].items()
             for description in SENSOR_TYPES
             if description.suitable(device)
         ]
